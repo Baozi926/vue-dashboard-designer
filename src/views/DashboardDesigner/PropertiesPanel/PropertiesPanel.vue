@@ -1,13 +1,37 @@
 <template>
   <el-tabs v-model="activeTabName" class="tabs">
     <el-tab-pane class="tab-panel" label="属性" name="properties">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 10px;
+        "
+      >
+        {{ item.i }}:{{ component.name }}
+      </div>
       <el-form @submit.native.prevent label-width="80px">
         <el-form-item v-for="item in properties" :label="item.alias">
           <el-input v-model="item.value" />
         </el-form-item>
       </el-form>
     </el-tab-pane>
-    <el-tab-pane class="tab-panel" label="样式" name="style">TODO</el-tab-pane>
+    <el-tab-pane class="tab-panel" label="样式" name="style">
+      <template v-if="stylesheet && stylesheet.length">
+        <el-form @submit.native.prevent label-width="80px">
+          <el-form-item v-for="item in stylesheet" :label="item.alias">
+            <!-- <el-input v-model="item.value" /> -->
+            <component
+              :is="getEditorComponent(item.editor)"
+              v-model="item.value"
+            >
+            </component>
+          </el-form-item>
+        </el-form>
+      </template>
+      <template v-else> 该组件没有可自定义的样式！ </template>
+    </el-tab-pane>
     <el-tab-pane class="tab-panel" label="数据源" name="source">
       <el-radio-group v-model="dataSouceType" class="ml-4">
         <el-radio label="static" size="large">静态数据</el-radio>
@@ -18,26 +42,33 @@
         <div class="center-panel" v-if="dataSouceType === 'static'">
           <!-- <div>静态数据源</div> -->
           <el-input
-            v-if="component.source.type === 'static'"
-            v-model="staticSourceValue"
+            v-model="sourceValue"
             :rows="4"
             type="textarea"
             placeholder="配置数据源"
           />
-          <ElButton style="margin-top: 10px; width: 100px" @click="applaySource"
-            >应用</ElButton
-          >
         </div>
         <div class="center-panel" v-else-if="dataSouceType === 'url'">
           <!-- <div>远程服务</div> -->
-          <div>TODO</div>
+
+          <el-input
+            v-model="sourceValue"
+            :rows="4"
+            type="textarea"
+            placeholder="配置数据源"
+          />
         </div>
+
+        <ElButton style="margin-top: 10px; width: 100px" @click="applaySource"
+          >应用</ElButton
+        >
       </template>
     </el-tab-pane>
   </el-tabs>
 </template>
 <script setup lang="ts">
-import { computed, ref, toRef, toRefs, watch } from "vue";
+import { PropType, computed, ref, watch } from "vue";
+import { getEditorComponent } from "./ValueEditor/EditorExport";
 import {
   ElForm,
   ElFormItem,
@@ -47,33 +78,20 @@ import {
   ElButton,
   ElRadioGroup,
   ElRadio,
+  ElMessage,
 } from "element-plus";
-
-const emits = defineEmits(["souceChange"]);
 
 const activeTabName = ref("properties");
 
-const dataSouceType = ref("static");
-
-const props: { item: any } = defineProps({
+const props = defineProps({
   item: {
     required: true,
     default() {
       return null;
     },
+    type: Object as PropType<MyComponentInstance>,
   },
 });
-
-console.log("props", props);
-
-// const item: any = computed({
-//   get() {
-//     return props.item;
-//   },
-//   set(val) {
-//     props.item = val;
-//   },
-// });
 
 const component: any = computed({
   get() {
@@ -87,17 +105,18 @@ const component: any = computed({
   },
 });
 
-// watch(
-//   () => {
-//     return props.item;
-//   },
-//   (val) => {
+const stylesheet = computed({
+  get() {
+    return props.item.component?.stylesheet;
+  },
+  set(val) {
+    if (!props.item.component) {
+      return;
+    }
 
-//     component.value = val;
-//   }
-// );
-
-console.log("component", component);
+    props.item.component.stylesheet = val;
+  },
+});
 
 const properties = computed({
   get() {
@@ -119,32 +138,73 @@ if (!component.value.source) {
   };
 }
 
-console.log("properties", properties);
+const parseStaticSourceValue = (val: any) => {
+  if (!val) {
+    return null;
+  }
+  if (typeof val === "string") {
+    return val;
+  }
 
-const staticSourceValue = computed({
-  get() {
-    if (!component?.value?.source) {
-      return "";
-    }
-
-    return typeof component.value.source.value === "string"
-      ? component.value.source.value
-      : JSON.stringify(component.value.source.value);
-  },
-  set(val) {
-    if (!component?.value.source) {
-      return;
-    }
-    component.value.source = {
-      type: "static",
-      value: val,
-    };
-  },
-});
-
-const applaySource = () => {
-  emits("souceChange", props.item);
+  return JSON.stringify(val);
 };
+
+const dataSouceType = ref<"static" | "url" | undefined>(
+  props.item.component?.source?.type || "static"
+);
+
+const sourceValue = ref(props.item.component?.source?.value);
+
+watch(
+  () => {
+    return props.item.component?.source;
+  },
+  () => {
+    sourceValue.value = parseStaticSourceValue(
+      props.item.component?.source?.value
+    );
+
+    dataSouceType.value = props.item.component?.source?.type;
+  }
+);
+
+//如果是对象就转换成字符
+if (!(sourceValue && typeof sourceValue === "string")) {
+  sourceValue.value = parseStaticSourceValue(sourceValue.value);
+}
+const applaySource = () => {
+  console.log("applaySource");
+  if (!props.item.component) {
+    console.warn("component is null");
+    return;
+  }
+  // emits("souceChange", props.item);
+  if (dataSouceType.value === "static") {
+    try {
+      const json = JSON.parse(sourceValue.value);
+      props.item.component.source = {
+        type: "static",
+        value: json,
+      };
+    } catch (e) {
+      ElMessage.error("数据格式不是正确的json格式");
+    }
+
+    return;
+  }
+
+  if (dataSouceType.value === "url") {
+    props.item.component.source = {
+      type: "url",
+      value: sourceValue.value,
+    };
+    return;
+  }
+
+  throw new Error("not implemented"!);
+};
+
+console.log("stylesheet", stylesheet);
 </script>
 <style lang="scss" scoped>
 .tabs {
@@ -153,7 +213,7 @@ const applaySource = () => {
     align-items: center;
     justify-content: center;
   }
-  .tab-panel{
+  .tab-panel {
     padding: 10px;
   }
 }

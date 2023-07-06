@@ -19,9 +19,13 @@ const id = router.currentRoute.value.params.id as string;
 console.log("id", id);
 
 onMounted(() => {
-  localStore.getItem(id).then((res:any) => {
+  localStore.getItem(id).then((res: any) => {
+    if (res.name) {
+      document.title = res.name;
+    }
+
     if (res && Array.isArray(res.layout)) {
-      layout.value = res.layout.map((v:any) => {
+      layout.value = res.layout.map((v: any) => {
         return {
           ...v,
           static: true,
@@ -65,6 +69,7 @@ onMounted(() => {
   /* border: 1px solid black; */
   box-shadow: rgba(6, 30, 53, 0.1) 0px 1px 2px 1px;
   border-radius: 8px;
+  overflow: hidden;
 }
 
 :deep(.vgl-item--resizing) {

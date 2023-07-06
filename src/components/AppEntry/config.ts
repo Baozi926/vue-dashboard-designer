@@ -1,7 +1,4 @@
-import * as Vue from "vue";
-
 export default {
-  // component: Vue.defineAsyncComponent(() => import("./AppEntry.vue")),
   name: "AppEntry",
   alias: "app快捷入口",
   width: 2,
@@ -24,4 +21,13 @@ export default {
       value: "",
     },
   ],
-};
+  stylesheet: [
+    {
+      name: "--appcolor",
+      value:
+        "linear-gradient(0deg, rgba(66, 165, 246, 1) 0%, rgba(156, 40, 177, 1) 98%)",
+      alias: "app颜色",
+      editor: "GradientColorEditor",
+    },
+  ],
+} as MyComponent;

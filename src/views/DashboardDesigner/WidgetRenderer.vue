@@ -3,13 +3,14 @@
     :style="getStyle()"
     v-bind="mapProperties(component?.properties)"
     :source="component?.source"
+    :stylesheet="component?.stylesheet"
     :is="getComponent(component?.name)"
     :mode="mode"
   ></component>
 </template>
 <script setup lang="ts">
 import { getComponent } from "../../components/ComponentExport";
-
+import { PropType } from "vue";
 const props = defineProps({
   widgetId: {
     required: false,
@@ -18,6 +19,7 @@ const props = defineProps({
     default() {
       return {};
     },
+    type: Object as PropType<any>,
     required: true,
   },
   mode: {
@@ -30,6 +32,7 @@ const props = defineProps({
 });
 
 const getStyle = () => {
+  //在编辑模式下，屏蔽点击事件
   return props.mode === "view" ? "" : `pointer-events: none;`;
 };
 

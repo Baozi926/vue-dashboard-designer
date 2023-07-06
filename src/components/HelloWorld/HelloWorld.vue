@@ -1,6 +1,5 @@
 <script setup lang="ts">
-
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useDataSource } from "../../hooks/useDataSource";
 
 const props: any = defineProps({
@@ -18,11 +17,16 @@ const props: any = defineProps({
   },
 });
 
-const { result } = useDataSource(props.source);
+const text = ref("");
 
-const text = computed(() => {
-  return result.value?.text;
-});
+useDataSource(
+  () => {
+    return props.source;
+  },
+  (result) => {
+    text.value = result.text;
+  }
+);
 </script>
 
 <template>

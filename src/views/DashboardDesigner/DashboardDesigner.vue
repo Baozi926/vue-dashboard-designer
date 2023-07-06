@@ -1,15 +1,29 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
+import {
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  toRefs,
+  reactive,
+} from "vue";
 import { useRouter } from "vue-router";
 import WidgetWrapper from "./WidgetWrapper.vue";
 import { deelCloneJson, uuid } from "../../utils/common";
+import { Delete, Monitor, DocumentAdd ,BrushFilled} from "@element-plus/icons-vue";
+
 import {
+  ElMessageBox,
+  ElInput,
+  ElTooltip,
   ElAside,
   ElMain,
   ElContainer,
   ElHeader,
   ElButton,
   ElMessage,
+  // ElTooltip
+  // ElTooltip
 } from "element-plus";
 
 import PropertiesPanel from "./PropertiesPanel/PropertiesPanel.vue";
@@ -56,6 +70,7 @@ async function saveConfig() {
     name: appName.value,
     layout: data,
     id: getAppId(),
+    timestamp: new Date().getTime(),
   });
 
   ElMessage.success("保存成功！");
@@ -67,19 +82,40 @@ const onDragStart = (item) => {
   draggingItem = item;
 };
 
-const layout = ref<any[]>([
-  {
-    x: 0,
-    y: 0,
-    w: 2,
-    h: 2,
-    i: "0",
-    static: false,
-  },
-]);
+const data = reactive({
+  layout: [
+    {
+      x: 0,
+      y: 0,
+      w: 2,
+      h: 2,
+      i: "0",
+      static: false,
+    },
+  ],
+});
+
+const { layout } = toRefs(data);
 
 function clear() {
-  layout.value = [];
+  ElMessageBox.confirm("是否要清空所有内容", "警告", {
+    confirmButtonText: "清空",
+    cancelButtonText: "取消",
+    type: "warning",
+  })
+    .then(async () => {
+      layout.value = [];
+      ElMessage({
+        type: "success",
+        message: "删除成功",
+      });
+    })
+    .catch(() => {
+      ElMessage({
+        type: "info",
+        message: "清空取消",
+      });
+    });
 }
 
 const wrapper = ref<HTMLElement>();
@@ -242,14 +278,6 @@ function dragEnd() {
 let isPreview = ref(false);
 
 function togglePreview() {
-  // isPreview.value = !isPreview.value;
-  // layout.value = layout.value.map((v) => {
-  //   return {
-  //     ...v,
-  //     static: isPreview.value,
-  //   };
-  // });
-
   const route = router.resolve({
     name: "viewer",
     params: {
@@ -260,14 +288,13 @@ function togglePreview() {
   window.open(route.href);
 }
 
-function onSourceChange(target) {
-  console.log(target);
+function onSourceChange(target: any) {
+  const find = layout.value.find((v) => {
+    return v.i === target.i;
+  });
 
-  //刷新数据
-  const tmp = [...layout.value];
-  layout.value = [];
   nextTick(() => {
-    layout.value = tmp;
+    find.component = deelCloneJson(target.component);
   });
 }
 
@@ -283,6 +310,7 @@ function deleteWidget(widget: any) {
 
 function deleteActiveWidget() {
   deleteWidget(activeItem.value);
+  activeItem.value = null;
 }
 </script>
 
@@ -292,15 +320,19 @@ function deleteActiveWidget() {
       <el-header class="design-header">
         <div class="row">
           <div class="start">
-            <el-button @click="deleteActiveWidget">删除</el-button>
+            <el-input v-model="appName" placeholder="应用名称" />
           </div>
-          <div class="main"></div>
-          <div class="end">
-            <el-button @click="togglePreview">{{
+          <div class="main">
+            <el-button :icon="Monitor" @click="togglePreview">{{
               isPreview ? "编辑" : "预览"
             }}</el-button>
-            <el-button @click="saveConfig">保存</el-button>
-            <el-button @click="clear">清空</el-button>
+            <el-button :icon="DocumentAdd" @click="saveConfig">保存</el-button>
+            <el-button :icon="BrushFilled" @click="clear">清空</el-button>
+          </div>
+          <div class="end">
+            <el-button :icon="Delete" @click="deleteActiveWidget"
+              >删除</el-button
+            >
           </div>
         </div>
       </el-header>
@@ -308,19 +340,35 @@ function deleteActiveWidget() {
         <el-container style="height: 100%; overflow-y: hidden">
           <el-aside class="a-side left" width="200px">
             <div
-              class="droppable-element-wrapper"
+              class="component-wrapper"
+              :key="item.name"
               v-for="item in getComponentList()"
-              draggable="true"
-              unselectable="on"
-              @dragstart="onDragStart(item)"
-              @drag="drag"
-              @dragend="dragEnd"
             >
-              <component
-                class="droppable-element"
-                :source="item?.source"
-                :is="getComponent(item.name)"
-              ></component>
+              <div class="flex-c">
+                <el-tooltip
+                  class="box-item"
+                  :content="item.alias"
+                  effect="dark"
+                  placement="right"
+                >
+                  <!-- <div class="alias">{{ item.alias }}</div> -->
+                  <div
+                    class="droppable-element-wrapper"
+                    draggable="true"
+                    unselectable="on"
+                    @dragstart="onDragStart(item)"
+                    @drag="drag"
+                    @dragend="dragEnd"
+                  >
+                    <component
+                      class="droppable-element"
+                      :source="item?.source"
+                      :stylesheet="item?.stylesheet"
+                      :is="getComponent(item.name)"
+                    ></component>
+                  </div>
+                </el-tooltip>
+              </div>
             </div>
           </el-aside>
           <el-main style="overflow-y: auto; padding: 0">
@@ -336,7 +384,7 @@ function deleteActiveWidget() {
               <GridLayout
                 ref="gridLayout"
                 v-model:layout="layout"
-                style="min-height: 300px"
+                style="min-height: 70vh"
                 :row-height="30"
               >
                 <template #item="{ item }">
@@ -348,11 +396,6 @@ function deleteActiveWidget() {
                       }
                     "
                   >
-                    <!-- <component
-                      v-bind="mapProperties(item.component?.properties)"
-                      :source="item.component?.source"
-                      :is="getComponent(item.component?.name)"
-                    ></component> -->
                     <WidgetRenderer
                       mode="edit"
                       :widgetId="item.id"
@@ -369,6 +412,18 @@ function deleteActiveWidget() {
               v-if="activeItem && activeItem.component"
               :item="activeItem"
             ></PropertiesPanel>
+            <div
+              style="
+                height: 100%;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+              v-else
+            >
+              请选择一个组件
+            </div>
           </el-aside>
         </el-container>
       </el-main>
@@ -400,6 +455,9 @@ function deleteActiveWidget() {
     flex-direction: row;
     box-shadow: rgba(6, 30, 53, 0.1) 0px 1px 0 0;
     border-bottom: 1px solid #ebecee;
+    .main {
+      margin-left: 50px;
+    }
   }
   .a-side.right {
     border-left: 1px solid #ebecee;
@@ -407,9 +465,31 @@ function deleteActiveWidget() {
     margin: 0;
   }
   .a-side.left {
+    height: 100%;
+    // width: 100%;
     border-right: 1px solid #ebecee;
-    padding: 0;
-    margin: 0;
+    overflow-y: auto;
+    .flex-c {
+     
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      .component-wrapper {
+        .droppable-element-wrapper {
+          cursor: pointer;
+        }
+        .alias {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        margin-bottom: 5px;
+        margin-top: 5px;
+        // border-bottom: 1px dashed #838384;
+      }
+    }
   }
 }
 
@@ -422,6 +502,7 @@ function deleteActiveWidget() {
   /* border: 1px solid black; */
   box-shadow: rgba(6, 30, 53, 0.1) 0px 1px 2px 1px;
   border-radius: 8px;
+  overflow: hidden;
 }
 
 :deep(.vgl-item--resizing) {
@@ -457,10 +538,11 @@ function deleteActiveWidget() {
   height: 80px;
   overflow: hidden;
   box-shadow: rgba(6, 30, 53, 0.1) 0px 1px 2px 1px;
-  user-select: none;
+
   margin: 10px;
   border-radius: 8px;
   .droppable-element {
+    user-select: none;
     // padding: 10px;
     // margin: 10px 0;
     text-align: center;

@@ -1,35 +1,36 @@
-import { nextTick, onMounted, ref, type Ref } from "vue";
+import { nextTick, onMounted, ref, watch, type Ref } from "vue";
 
-type DataSource = {
-  type: "static" | "url";
-  value: string;
-};
 
-export function useDataSource(source: DataSource, onLoaded = (val: any) => {}) {
+
+export function useDataSource(source: Function, onLoaded = (val: any) => {}) {
   const loaded: Ref<boolean> = ref(false);
+  let result: any | null = null;
 
-  const result: Ref<any> = ref(null);
+  let getSource =
+    typeof source === "function"
+      ? source
+      : () => {
+          return source;
+        };
 
-  switch (source?.type) {
-    case "static":
-      result.value =
-        source.value && typeof source.value === "string"
-          ? JSON.parse(source.value)
-          : source.value;
-      loaded.value = true;
-      onMounted(() => {
-        nextTick(() => {
-          onLoaded(result);
-        });
-      });
+  const onDataSourceChange = () => {
+    const source = getSource() as DataSource;
+    console.log("data source changed");
 
-      break;
-    case "url":
-      onMounted(() => {
+    switch (source?.type) {
+      case "static":
+        result =
+          source.value && typeof source.value === "string"
+            ? JSON.parse(source.value)
+            : source.value;
+        loaded.value = true;
+        onLoaded(result);
+        break;
+      case "url":
         if (source.value) {
           fetch(source.value).then((res) => {
             res.json().then((json) => {
-              result.value = json;
+              result = json;
               loaded.value = true;
 
               nextTick(() => {
@@ -40,11 +41,23 @@ export function useDataSource(source: DataSource, onLoaded = (val: any) => {}) {
         } else {
           console.error("source is invalid", source);
         }
-      });
-      break;
-    default:
-      break;
-  }
+        break;
+      default:
+        break;
+    }
+  };
+
+  watch(
+    getSource,
+    () => {
+      onDataSourceChange();
+    },
+    {}
+  );
+
+  onMounted(() => {
+    onDataSourceChange();
+  });
 
   return { result };
 }

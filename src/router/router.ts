@@ -13,17 +13,26 @@ const routes = [
   {
     path: "/edit/:id",
     component: () => import("../views/DashboardDesigner/DashboardDesigner.vue"),
-    name:"edit"
+    name:"edit",
+    meta:{
+      title:"editor"
+    }
   },
   {
     path: "/viewer/:id",
     component: () => import("../views/DashboardDesigner/DashboardViewer.vue"),
-    name:"viewer"
+    name:"viewer",
+    meta:{
+      title:"viewer"
+    }
   },
   {
     path: "/gallery",
     component: () => import("../views/DashboardGallery/DashboardGallery.vue"),
-    name:"gallery"
+    name:"gallery",
+    meta:{
+      title:"gallery"
+    }
   },
   {
     path: "/",
@@ -43,5 +52,14 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes, // `routes: routes` 的缩写
 });
+
+router.beforeEach((to, from, next) => {//beforeEach是router的钩子函数，在进入路由前执行
+  if (to.meta.title) {//判断是否有标题
+      // @ts-ignore
+      document.title = to.meta.title
+  }
+  next()//执行进入路由，如果不写就不会进入目标页
+})
+
 
 export default router;

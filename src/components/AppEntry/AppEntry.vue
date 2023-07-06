@@ -1,5 +1,5 @@
 <template>
-  <div @click="onClick" class="app-entry widget">
+  <div :style="styleValue" @click="onClick" class="app-entry widget">
     <div class="icon">
       <img :src="icon" />
     </div>
@@ -7,6 +7,9 @@
   </div>
 </template>
 <script setup lang="ts">
+import { parseStylesheet } from "../ComponentUtil";
+import { computed } from "vue";
+
 const props = defineProps({
   title: {
     default() {
@@ -26,13 +29,22 @@ const props = defineProps({
       return "";
     },
   },
+  stylesheet: {
+    default() {
+      return [];
+    },
+    required: false,
+  },
+});
+
+const styleValue = computed(() => {
+  return parseStylesheet(props.stylesheet);
 });
 
 function onClick() {
-  if(props.url){
+  if (props.url) {
     window.open(props.url);
   }
- 
 }
 </script>
 <style lang="scss">
@@ -46,6 +58,7 @@ function onClick() {
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  cursor: pointer;
 
   //   border: 2px solid transparent;
   //   width: 48px;
@@ -54,7 +67,7 @@ function onClick() {
   .icon {
     width: 60px;
     height: 60px;
-    background-image: linear-gradient(135deg, #7ed49a, #46c26f);
+    background-image: var(--appcolor);
     overflow: hidden;
     border-radius: 8px;
     img {

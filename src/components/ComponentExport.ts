@@ -2,7 +2,7 @@ import * as Vue from "vue";
 
 const componentMap: any = {};
 
-const componentsMeta: any[] = [];
+const componentsMeta: MyComponent[] = [];
 
 const moduleFilesTs: any = import.meta.glob("./**/config.ts", {
   eager: true,
@@ -15,7 +15,7 @@ Object.keys(moduleFilesTs).forEach((key: string) => {
     key.replace("config.ts", componentOptions.name) + ".vue";
 
   componentMap[componentOptions.name] = Vue.defineAsyncComponent(
-    () => import(componentPath)
+    () => import(componentPath/* @vite-ignore */)
   );
 
   componentsMeta.push(componentOptions);

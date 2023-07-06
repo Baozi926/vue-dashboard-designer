@@ -21,6 +21,10 @@ export function useLocalStore(name: string) {
     return store.getItem(id);
   }
 
+  function deleteItem(id: string) {
+    return store.removeItem(id);
+  }
+
   async function getList() {
     const keys = await store.keys();
 
@@ -32,5 +36,5 @@ export function useLocalStore(name: string) {
     return all;
   }
 
-  return { setItem, getItem, getList };
+  return { setItem, getItem, getList, deleteItem };
 }
