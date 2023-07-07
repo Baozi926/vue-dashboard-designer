@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  # 每当 push 到 main 分支时触发部署
+  push:
+    branches: [release]
+  # 手动触发部署
+  workflow_dispatch:
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # “最近更新时间” 等 git 日志相关信息，需要拉取全部提交记录
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          # 选择要使用的 node 版本
+          node-version: '16'
+
+      # 安装依赖
+      - name: Install dependencies
+        run: npm i
+
+
+      # 运行构建脚本
+      - name: Build frontend
+        run: npm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.OPENDATAV }}
+          publish_dir: ./dist
+          cname: github.com
+        env:
+          GITHUB_TOKEN: ${{ secrets.OPENDATAV }}
