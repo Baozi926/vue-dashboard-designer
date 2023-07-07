@@ -23,6 +23,7 @@ type DataSource = {
  * @property alias - 别名，组件显示的名称
  */
 type MyComponent = {
+  desc?:string
   order?: number;
   catagory?: "";
   name?: string;

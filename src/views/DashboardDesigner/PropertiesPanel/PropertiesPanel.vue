@@ -64,10 +64,43 @@
         >
       </template>
     </el-tab-pane>
+    <el-tab-pane class="tab-pabel" label="分享" name=" share">
+      <div style="text-align: center;">
+        <el-button
+          @click="
+            shareDialogVisible = true;
+            shareForm = {
+              desc: '',
+              alias: '',
+            };
+          "
+          >分享到组件超市</el-button
+        >
+      </div>
+    </el-tab-pane>
+
+    <el-dialog v-model="shareDialogVisible" title="分享到组件超市" width="30%">
+      <span>
+        <el-form @submit.native.prevent label-width="80px">
+          <el-form-item label="名称">
+            <el-input v-model="shareForm.alias" />
+          </el-form-item>
+          <el-form-item label="描述">
+            <el-input v-model="shareForm.desc" />
+          </el-form-item>
+        </el-form>
+      </span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="shareDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="doShare"> 分享 </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </el-tabs>
 </template>
 <script setup lang="ts">
-import { PropType, computed, ref, watch } from "vue";
+import { PropType, computed, reactive, ref, watch, toRefs } from "vue";
 import { getEditorComponent } from "./ValueEditor/EditorExport";
 import {
   ElForm,
@@ -79,9 +112,20 @@ import {
   ElRadioGroup,
   ElRadio,
   ElMessage,
+  ElDialog,
 } from "element-plus";
+import { deelCloneJson } from "../../../utils/common";
+import { shareComponent } from "../../../api/components";
 
 const activeTabName = ref("properties");
+
+const data = reactive({
+  shareDialogVisible: false,
+  shareForm: {
+    alias: "",
+    desc: "",
+  },
+});
 
 const props = defineProps({
   item: {
@@ -203,8 +247,19 @@ const applaySource = () => {
 
   throw new Error("not implemented"!);
 };
+const doShare = () => {
+  data.shareDialogVisible = false;
+  share(props.item.component);
+};
+const share = (component: MyComponent) => {
+  shareComponent({
+    ...component,
+    alias: data.shareForm.alias,
+    desc: data.shareForm.desc,
+  });
+};
 
-console.log("stylesheet", stylesheet);
+const { shareDialogVisible, shareForm } = toRefs(data);
 </script>
 <style lang="scss" scoped>
 .tabs {

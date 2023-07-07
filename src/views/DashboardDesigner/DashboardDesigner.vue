@@ -10,12 +10,16 @@ import {
 import { useRouter } from "vue-router";
 import WidgetWrapper from "./WidgetWrapper.vue";
 import { deelCloneJson, uuid } from "../../utils/common";
-import { Delete, Monitor, DocumentAdd ,BrushFilled} from "@element-plus/icons-vue";
-
+import {
+  Delete,
+  Monitor,
+  DocumentAdd,
+  BrushFilled,
+} from "@element-plus/icons-vue";
+import ComponentPanel from "./ComponentPanel/ComponentPanel.vue";
 import {
   ElMessageBox,
   ElInput,
-  ElTooltip,
   ElAside,
   ElMain,
   ElContainer,
@@ -32,10 +36,6 @@ import { throttle } from "@vexip-ui/utils";
 import { GridLayout } from "grid-layout-plus";
 import "element-plus/es/components/message/style/css";
 
-import {
-  getComponentList,
-  getComponent,
-} from "../../components/ComponentExport";
 import { useLocalStore } from "../../hooks/useLocalStore";
 import WidgetRenderer from "./WidgetRenderer.vue";
 
@@ -339,37 +339,7 @@ function deleteActiveWidget() {
       <el-main style="padding: 0">
         <el-container style="height: 100%; overflow-y: hidden">
           <el-aside class="a-side left" width="200px">
-            <div
-              class="component-wrapper"
-              :key="item.name"
-              v-for="item in getComponentList()"
-            >
-              <div class="flex-c">
-                <el-tooltip
-                  class="box-item"
-                  :content="item.alias"
-                  effect="dark"
-                  placement="right"
-                >
-                  <!-- <div class="alias">{{ item.alias }}</div> -->
-                  <div
-                    class="droppable-element-wrapper"
-                    draggable="true"
-                    unselectable="on"
-                    @dragstart="onDragStart(item)"
-                    @drag="drag"
-                    @dragend="dragEnd"
-                  >
-                    <component
-                      class="droppable-element"
-                      :source="item?.source"
-                      :stylesheet="item?.stylesheet"
-                      :is="getComponent(item.name)"
-                    ></component>
-                  </div>
-                </el-tooltip>
-              </div>
-            </div>
+            <ComponentPanel  @dragstart="onDragStart" @drag="drag"   @dragend="dragEnd" ></ComponentPanel>
           </el-aside>
           <el-main style="overflow-y: auto; padding: 0">
             <div
@@ -470,25 +440,11 @@ function deleteActiveWidget() {
     border-right: 1px solid #ebecee;
     overflow-y: auto;
     .flex-c {
-     
       padding: 0;
       margin: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      .component-wrapper {
-        .droppable-element-wrapper {
-          cursor: pointer;
-        }
-        .alias {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        margin-bottom: 5px;
-        margin-top: 5px;
-        // border-bottom: 1px dashed #838384;
-      }
     }
   }
 }
@@ -532,26 +488,5 @@ function deleteActiveWidget() {
 
 .columns {
   columns: 120px;
-}
-.droppable-element-wrapper {
-  width: 150px;
-  height: 80px;
-  overflow: hidden;
-  box-shadow: rgba(6, 30, 53, 0.1) 0px 1px 2px 1px;
-
-  margin: 10px;
-  border-radius: 8px;
-  .droppable-element {
-    user-select: none;
-    // padding: 10px;
-    // margin: 10px 0;
-    text-align: center;
-    // background-color: #fdd;
-    // border: 1px solid black;
-    // max-width: 150px;
-    // min-width: 150px;
-
-    border-radius: 8px;
-  }
 }
 </style>
