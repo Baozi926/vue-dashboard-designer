@@ -3,7 +3,7 @@
     <color-picker
       v-model:pureColor="pureColor"
       v-model:gradientColor="gradientColor"
-      useType="both"
+      useType="pure"
     />
   </div>
 </template>

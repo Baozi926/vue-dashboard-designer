@@ -3,12 +3,12 @@
     <color-picker
       v-model:pureColor="pureColor"
       v-model:gradientColor="gradientColor"
-      useType="both"
+      useType="gradient"
     />
   </div>
 </template>
 <script setup lang="ts">
-import { ElRadioGroup, ElRadio } from "element-plus";
+// import { ElRadioGroup, ElRadio } from "element-plus";
 import { reactive, toRefs, watch } from "vue";
 import { ColorPicker } from "vue3-colorpicker";
 import "vue3-colorpicker/style.css";

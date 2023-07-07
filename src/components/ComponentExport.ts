@@ -4,19 +4,26 @@ const componentMap: any = {};
 
 const componentsMeta: MyComponent[] = [];
 
-const moduleFilesTs: any = import.meta.glob("./**/config.ts", {
+const moduleConfigs: any = import.meta.glob("./**/config.ts", {
   eager: true,
 });
 
-Object.keys(moduleFilesTs).forEach((key: string) => {
-  const componentOptions = moduleFilesTs[key]?.default;
+const modules = import.meta.glob("./**/*.vue");
+
+Object.keys(moduleConfigs).forEach((key: string) => {
+  const componentOptions = moduleConfigs[key]?.default;
 
   const componentPath =
     key.replace("config.ts", componentOptions.name) + ".vue";
 
-  componentMap[componentOptions.name] = Vue.defineAsyncComponent(
-    () => import(componentPath/* @vite-ignore */)
-  );
+  const moduleKey = Object.keys(modules).find((modulePath) => {
+    return modulePath === componentPath;
+  });
+
+  if (moduleKey) {
+    const component = modules[moduleKey];
+    componentMap[componentOptions.name] = Vue.defineAsyncComponent(component);
+  }
 
   componentsMeta.push(componentOptions);
 });

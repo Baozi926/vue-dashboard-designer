@@ -6,7 +6,7 @@
     <div>{{ weather }} - {{ tempreture }}℃</div>
   </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { onMounted, reactive, toRefs } from "vue";
 import { useCache } from "../../hooks/useCache";
 
